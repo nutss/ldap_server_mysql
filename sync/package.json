@@ -1,0 +1,9 @@
+{
+  "name": "ldap-sync",
+  "version": "1.0.0",
+  "main": "sync-ldap.js",
+  "dependencies": {
+    "mysql2": "^3.9.0",
+    "dotenv": "^16.3.1"
+  }
+}
