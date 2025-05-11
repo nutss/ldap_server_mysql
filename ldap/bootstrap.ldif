@@ -1,0 +1,3 @@
+dn: ou=staff,dc=classicscan,dc=co,dc=th
+objectClass: organizationalUnit
+ou: staff
