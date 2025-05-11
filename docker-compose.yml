@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: staffdb
+    volumes:
+      - mysql_data:/var/lib/mysql
+    deploy:
+      replicas: 1
+    networks:
+      - ldapnet
+
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    environment:
+      LDAP_ORGANISATION: "Classic Scan Co."
+      LDAP_DOMAIN: "classicscan.co.th"
+      LDAP_ADMIN_PASSWORD: secret
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+      - ./ldap/bootstrap.ldif:/container/service/slapd/assets/config/bootstrap/ldif/50-bootstrap.ldif
+    ports:
+      - "389:389"
+    deploy:
+      replicas: 1
+    networks:
+      - ldapnet
+
+  ldap-sync:
+    build: ./sync
+    depends_on:
+      - mysql
+      - openldap
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: rootpass
+      MYSQL_DATABASE: staffdb
+
+      LDAP_HOST: openldap
+      LDAP_PORT: 389
+      LDAP_BASEDN: dc=classicscan,dc=co,dc=th
+      LDAP_ADMIN_USER: cn=admin,dc=classicscan,dc=co,dc=th
+      LDAP_ADMIN_PASS: secret
+    volumes:
+      - ./sync:/app
+    command: ["node", "sync-ldap.js"]
+    deploy:
+      replicas: 1
+    networks:
+      - ldapnet
+
+volumes:
+  mysql_data:
+  ldap_data:
+  ldap_config:
+
+networks:
+  ldapnet:
